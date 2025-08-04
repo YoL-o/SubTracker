@@ -10,7 +10,16 @@ interface NavbarProps {
 
 const AppNavbar: React.FC<NavbarProps> = ({ darkMode, onToggleDarkMode, onToggleSidebar }) => {
   return (
-    <Navbar expand="lg" className="navbar">
+    <Navbar
+      expand="lg"
+      className="navbar"
+      style={{
+        position: 'relative', // Ensure it's part of normal flow
+        zIndex: 1,
+        borderBottom: '1px solid rgba(0, 0, 0, 0.1)', // Optional: visual separation
+        backgroundColor: 'var(--bs-body-bg)', // Bootstrap variable for light/dark mode
+      }}
+    >
       <Container fluid>
         <Button
           variant="outline-secondary"
@@ -20,11 +29,11 @@ const AppNavbar: React.FC<NavbarProps> = ({ darkMode, onToggleDarkMode, onToggle
         >
           <Menu size={18} />
         </Button>
-        
+
         <Navbar.Brand href="#" className="gradient-bg bg-clip-text">
           SubTrackr
         </Navbar.Brand>
-        
+
         <Nav className="ms-auto">
           <Button
             variant="outline-secondary"

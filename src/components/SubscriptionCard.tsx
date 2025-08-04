@@ -18,7 +18,6 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   subscription,
   onEdit,
   onDelete,
-  onRenew,
   defaultCurrency = 'USD',
 }) => {
   const daysUntil = getDaysUntil(subscription.nextBillingDate);
@@ -73,7 +72,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               </span>
               <span className="ms-1">/{subscription.billingCycle}</span>
               {subscription.splitCost && (
-                <Users size={12} className="ms-1 text-info" title="Shared subscription" />
+                <Users size={12} className="ms-1 text-info" />
               )}
             </div>
           </Col>
@@ -126,14 +125,13 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
 
         <div className="d-flex justify-content-between align-items-center">
           <small className="text-muted">
-            Total spent: {currency?.symbol || '$'}{subscription.totalSpent.toFixed(2)}
+            Total spent: {formatCurrencyAmount(getConvertedAmount({ ...subscription, amount: subscription.totalSpent }, defaultCurrency), defaultCurrency)}
           </small>
           <div className="btn-group btn-group-sm">
             {isPastDueDate && (
               <Button
                 variant="success"
                 size="sm"
-          Total spent: {formatCurrencyAmount(getConvertedAmount({ ...subscription, amount: subscription.totalSpent }, defaultCurrency), defaultCurrency)}
                 title="Mark as Renewed"
               >
                 <CheckCircle size={14} />
