@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, Badge, Button, Alert, ProgressBar } from 're
 import { Clock, AlertTriangle, CheckCircle, Calendar } from 'lucide-react';
 import { Subscription } from '../types';
 import { formatDate, getDaysUntil } from '../utils/dateUtils';
-import { currencies } from '../data/categories';
+import { getConvertedAmount, formatCurrencyAmount } from '../utils/currencyUtils';
 
 interface FreeTrialsProps {
   subscriptions: Subscription[];
@@ -18,7 +18,6 @@ const FreeTrials: React.FC<FreeTrialsProps> = ({
   onDeleteSubscription,
   defaultCurrency,
 }) => {
-  const currencySymbol = currencies.find(c => c.code === defaultCurrency)?.symbol || '$';
   const freeTrials = subscriptions.filter(sub => sub.isFreeTrial && sub.isActive);
   const expiringSoon = freeTrials.filter(sub => 
     sub.trialEndDate && getDaysUntil(sub.trialEndDate) <= 3 && getDaysUntil(sub.trialEndDate) >= 0
@@ -93,7 +92,7 @@ const FreeTrials: React.FC<FreeTrialsProps> = ({
                 <div>
                   <h6 className="card-title mb-0">Potential Savings</h6>
                   <h3 className="mb-0 text-success">
-                    {currencySymbol}{freeTrials.reduce((total, sub) => total + sub.amount, 0).toFixed(2)}
+                    {formatCurrencyAmount(freeTrials.reduce((total, sub) => total + getConvertedAmount(sub, defaultCurrency), 0), defaultCurrency)}
                   </h3>
                 </div>
                 <CheckCircle size={32} className="text-success opacity-75" />
@@ -109,10 +108,9 @@ const FreeTrials: React.FC<FreeTrialsProps> = ({
                 <div>
                   <h6 className="card-title mb-0">This Month</h6>
                   <h3 className="mb-0 text-info">
-                    {currencySymbol}{freeTrials
+                    {formatCurrencyAmount(freeTrials
                       .filter(sub => sub.billingCycle === 'monthly')
-                      .reduce((total, sub) => total + sub.amount, 0)
-                      .toFixed(2)}
+                      .reduce((total, sub) => total + getConvertedAmount(sub, defaultCurrency), 0), defaultCurrency)}
                   </h3>
                 </div>
                 <Calendar size={32} className="text-info opacity-75" />
@@ -186,7 +184,7 @@ const FreeTrials: React.FC<FreeTrialsProps> = ({
                         <Col xs={6}>
                           <small className="text-muted">Will cost:</small>
                           <div className="fw-bold">
-                            {currencySymbol}{trial.amount}
+                            {formatCurrencyAmount(getConvertedAmount(trial, defaultCurrency), defaultCurrency)}
                             <span className="text-muted">/{trial.billingCycle}</span>
                           </div>
                         </Col>

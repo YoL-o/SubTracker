@@ -10,7 +10,7 @@ interface NavbarProps {
 
 const AppNavbar: React.FC<NavbarProps> = ({ darkMode, onToggleDarkMode, onToggleSidebar }) => {
   return (
-    <Navbar bg={darkMode ? 'dark' : 'light'} variant={darkMode ? 'dark' : 'light'} expand="lg" className="border-bottom">
+    <Navbar expand="lg" className="navbar">
       <Container fluid>
         <Button
           variant="outline-secondary"

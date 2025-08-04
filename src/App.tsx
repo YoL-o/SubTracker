@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import { Subscription, AppSettings } from './types';
+import { Subscription, AppSettings, BillingHistory, Budget } from './types';
 import { loadSubscriptions, saveSubscriptions, loadSettings, saveSettings, downloadCSV } from './utils/storage';
 import { getNextBillingDate, isUpcoming } from './utils/dateUtils';
 import AppNavbar from './components/Navbar';
@@ -23,7 +23,9 @@ function App() {
       daysBeforeRenewal: 3,
       browserNotifications: false,
     },
+    autoConvertCurrency: false,
   });
+  const [billingHistory, setBillingHistory] = useState<BillingHistory[]>([]);
   const [activeView, setActiveView] = useState('dashboard');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingSubscription, setEditingSubscription] = useState<Subscription | undefined>();
@@ -121,6 +123,20 @@ function App() {
           sub.billingCycle,
           sub.customDays
         );
+        
+        // Add to billing history
+        const historyEntry: BillingHistory = {
+          id: `history_${Date.now()}`,
+          subscriptionId: sub.id,
+          subscriptionName: sub.name,
+          amount: sub.amount,
+          currency: sub.currency,
+          date: new Date().toISOString().split('T')[0],
+          type: 'renewal',
+          paymentMethod: sub.paymentMethod,
+        };
+        
+        setBillingHistory(prev => [...prev, historyEntry]);
         
         return {
           ...sub,
@@ -266,6 +282,8 @@ function App() {
             onDeleteSubscription={handleDeleteSubscription}
             onRenewSubscription={handleRenewSubscription}
             defaultCurrency={settings.currency}
+            budget={settings.budget}
+            billingHistory={billingHistory}
           />
         );
     }
@@ -281,7 +299,7 @@ function App() {
       
       <Container fluid className="px-0">
         <Row className="g-0">
-          <Col lg={2} className="d-none d-lg-block">
+          <Col lg={2} className="d-none d-lg-block position-relative">
             <Sidebar
               activeView={activeView}
               onViewChange={handleViewChange}
@@ -290,7 +308,7 @@ function App() {
             />
           </Col>
           
-          <Col lg={10} className="main-content">
+          <Col lg={10} className="main-content p-0">
             {renderActiveView()}
           </Col>
         </Row>

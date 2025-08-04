@@ -36,4 +36,11 @@ export const currencies = [
   { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
   { code: 'NGN', symbol: '₦', name: 'Nigerian Naira' },
   { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+  { code: 'ZAR', symbol: 'R', name: 'South African Rand' },
+  { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling' },
+  { code: 'GHS', symbol: '₵', name: 'Ghanaian Cedi' },
+  { code: 'EGP', symbol: 'E£', name: 'Egyptian Pound' },
+  { code: 'MAD', symbol: 'DH', name: 'Moroccan Dirham' },
+  { code: 'TZS', symbol: 'TSh', name: 'Tanzanian Shilling' },
+  { code: 'UGX', symbol: 'USh', name: 'Ugandan Shilling' },
 ];

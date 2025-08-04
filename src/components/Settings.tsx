@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
-import { Settings as SettingsIcon, Save, Download, Upload } from 'lucide-react';
-import { AppSettings } from '../types';
+import { Container, Row, Col, Card, Form, Button, Alert, InputGroup } from 'react-bootstrap';
+import { Settings as SettingsIcon, Save, Download, Upload, Target, DollarSign } from 'lucide-react';
+import { AppSettings, Budget } from '../types';
 import { currencies } from '../data/categories';
 
 interface SettingsProps {
@@ -19,9 +19,24 @@ const Settings: React.FC<SettingsProps> = ({
 }) => {
   const [formData, setFormData] = useState(settings);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [budgetData, setBudgetData] = useState<Budget>(
+    settings.budget || {
+      id: 'default',
+      name: 'Monthly Budget',
+      limit: 0,
+      currency: settings.currency,
+      period: 'monthly',
+      warningThreshold: 80,
+      isActive: false,
+    }
+  );
 
   const handleSave = () => {
-    onUpdateSettings(formData);
+    const updatedSettings = {
+      ...formData,
+      budget: budgetData.isActive ? budgetData : undefined,
+    };
+    onUpdateSettings(updatedSettings);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
   };
@@ -35,6 +50,10 @@ const Settings: React.FC<SettingsProps> = ({
       ...prev,
       reminders: { ...prev.reminders, [field]: value }
     }));
+  };
+
+  const handleBudgetChange = (field: string, value: any) => {
+    setBudgetData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -97,6 +116,89 @@ const Settings: React.FC<SettingsProps> = ({
                   </Form.Group>
                 </Col>
               </Row>
+              
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Check
+                      type="checkbox"
+                      id="autoConvertCurrency"
+                      label="Auto-convert currencies"
+                      checked={formData.autoConvertCurrency}
+                      onChange={(e) => handleInputChange('autoConvertCurrency', e.target.checked)}
+                    />
+                    <Form.Text className="text-muted">
+                      Automatically convert foreign currencies to your default currency
+                    </Form.Text>
+                  </Form.Group>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+
+          {/* Budget Settings */}
+          <Card className="card-hover mb-4">
+            <Card.Header>
+              <h5 className="mb-0">
+                <Target size={20} className="me-2" />
+                Budget Settings
+              </h5>
+            </Card.Header>
+            <Card.Body>
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="checkbox"
+                  id="budgetEnabled"
+                  label="Enable monthly budget tracking"
+                  checked={budgetData.isActive}
+                  onChange={(e) => handleBudgetChange('isActive', e.target.checked)}
+                />
+                <Form.Text className="text-muted">
+                  Set a monthly spending limit and get warnings when approaching it
+                </Form.Text>
+              </Form.Group>
+
+              {budgetData.isActive && (
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Monthly Budget Limit</Form.Label>
+                      <InputGroup>
+                        <InputGroup.Text>
+                          {currencies.find(c => c.code === formData.currency)?.symbol || '$'}
+                        </InputGroup.Text>
+                        <Form.Control
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={budgetData.limit}
+                          onChange={(e) => handleBudgetChange('limit', parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                        />
+                      </InputGroup>
+                    </Form.Group>
+                  </Col>
+                  
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Warning Threshold</Form.Label>
+                      <InputGroup>
+                        <Form.Control
+                          type="number"
+                          min="50"
+                          max="95"
+                          value={budgetData.warningThreshold}
+                          onChange={(e) => handleBudgetChange('warningThreshold', parseInt(e.target.value) || 80)}
+                        />
+                        <InputGroup.Text>%</InputGroup.Text>
+                      </InputGroup>
+                      <Form.Text className="text-muted">
+                        Get warned when you reach this percentage of your budget
+                      </Form.Text>
+                    </Form.Group>
+                  </Col>
+                </Row>
+              )}
             </Card.Body>
           </Card>
 

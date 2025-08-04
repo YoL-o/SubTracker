@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Button, Row, Col, Alert } from 'react-bootstrap';
+import { Modal, Form, Button, Row, Col } from 'react-bootstrap';
 import { Subscription } from '../types';
 import { categories, paymentMethods, currencies } from '../data/categories';
 import dayjs from 'dayjs';
@@ -31,6 +31,9 @@ const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
     isActive: true,
     description: '',
     autoRenew: true,
+    splitCost: false,
+    userShare: 100,
+    sharedWith: [] as any[],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -51,6 +54,9 @@ const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
         isActive: editingSubscription.isActive,
         description: editingSubscription.description || '',
         autoRenew: editingSubscription.autoRenew,
+        splitCost: editingSubscription.splitCost || false,
+        userShare: editingSubscription.userShare || 100,
+        sharedWith: editingSubscription.sharedWith || [],
       });
     } else {
       setFormData({
@@ -67,6 +73,9 @@ const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
         isActive: true,
         description: '',
         autoRenew: true,
+        splitCost: false,
+        userShare: 100,
+        sharedWith: [],
       });
     }
     setErrors({});
@@ -119,6 +128,9 @@ const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
       createdAt: editingSubscription?.createdAt || new Date().toISOString(),
       totalSpent: editingSubscription?.totalSpent || 0,
       autoRenew: formData.autoRenew,
+      splitCost: formData.splitCost,
+      userShare: formData.userShare,
+      sharedWith: formData.sharedWith,
     };
 
     onSave(subscription);
@@ -303,6 +315,40 @@ const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
                   <Form.Control.Feedback type="invalid">
                     {errors.trialEndDate}
                   </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          <Row>
+            <Col md={12}>
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="checkbox"
+                  id="splitCost"
+                  label="This is a shared subscription"
+                  checked={formData.splitCost}
+                  onChange={(e) => handleInputChange('splitCost', e.target.checked)}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+
+          {formData.splitCost && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Your Share (%)</Form.Label>
+                  <Form.Control
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={formData.userShare}
+                    onChange={(e) => handleInputChange('userShare', parseInt(e.target.value) || 100)}
+                  />
+                  <Form.Text className="text-muted">
+                    You'll pay {formData.userShare}% of {currencies.find(c => c.code === formData.currency)?.symbol || '$'}{formData.amount} = {currencies.find(c => c.code === formData.currency)?.symbol || '$'}{((parseFloat(formData.amount) || 0) * (formData.userShare / 100)).toFixed(2)}
+                  </Form.Text>
                 </Form.Group>
               </Col>
             </Row>
