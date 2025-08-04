@@ -8,6 +8,7 @@ import PaymentMethodTracker from './PaymentMethodTracker';
 import BillingHistory from './BillingHistory';
 import { getDaysUntil, isPastDue, isUpcoming } from '../utils/dateUtils';
 import { currencies } from '../data/categories';
+import { getMonthlyAmount, formatCurrencyAmount } from '../utils/currencyUtils';
 import { BillingHistory as BillingHistoryType } from '../types';
 
 interface DashboardProps {
@@ -39,23 +40,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   const pastDue = activeSubscriptions.filter(sub => isPastDue(sub.nextBillingDate));
 
   const totalMonthlySpend = activeSubscriptions.reduce((total, sub) => {
-    let monthlyAmount = sub.amount;
-    if (sub.billingCycle === 'yearly') {
-      monthlyAmount = sub.amount / 12;
-    } else if (sub.billingCycle === 'custom' && sub.customDays) {
-      monthlyAmount = (sub.amount / sub.customDays) * 30;
-    }
-    
-    // Apply user share if subscription is shared
-    if (sub.splitCost && sub.userShare) {
-      monthlyAmount = monthlyAmount * (sub.userShare / 100);
-    }
-    
-    return total + monthlyAmount;
+    return total + getMonthlyAmount(sub, defaultCurrency);
   }, 0);
 
   const totalYearlySpend = totalMonthlySpend * 12;
-  const currencySymbol = currencies.find(c => c.code === defaultCurrency)?.symbol || '$';
 
   return (
     <Container fluid className="py-4">
@@ -78,7 +66,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="d-flex justify-content-between align-items-center">
                 <div>
                   <h6 className="card-title mb-0">Monthly Spend</h6>
-                  <h3 className="mb-0">{currencySymbol}{totalMonthlySpend.toFixed(2)}</h3>
+                  <h3 className="mb-0">{formatCurrencyAmount(totalMonthlySpend, defaultCurrency)}</h3>
                 </div>
                 <TrendingUp size={32} className="opacity-75" />
               </div>
@@ -92,7 +80,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="d-flex justify-content-between align-items-center">
                 <div>
                   <h6 className="card-title mb-0">Yearly Projection</h6>
-                  <h3 className="mb-0">{currencySymbol}{totalYearlySpend.toFixed(2)}</h3>
+                  <h3 className="mb-0">{formatCurrencyAmount(totalYearlySpend, defaultCurrency)}</h3>
                 </div>
                 <Calendar size={32} className="opacity-75" />
               </div>

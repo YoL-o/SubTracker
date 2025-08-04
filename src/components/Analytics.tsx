@@ -12,7 +12,8 @@ import {
 } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
 import { Subscription } from '../types';
-import { categories, currencies } from '../data/categories';
+import { categories } from '../data/categories';
+import { getMonthlyAmount, formatCurrencyAmount } from '../utils/currencyUtils';
 import { TrendingUp, PieChart, BarChart3, DollarSign } from 'lucide-react';
 
 ChartJS.register(
@@ -31,18 +32,13 @@ interface AnalyticsProps {
 }
 
 const Analytics: React.FC<AnalyticsProps> = ({ subscriptions, defaultCurrency }) => {
-  const currencySymbol = currencies.find(c => c.code === defaultCurrency)?.symbol || '$';
   const activeSubscriptions = subscriptions.filter(sub => sub.isActive);
 
   const categoryData = useMemo(() => {
     const categoryTotals = new Map<string, number>();
     
     activeSubscriptions.forEach(sub => {
-      const monthlyAmount = sub.billingCycle === 'yearly' 
-        ? sub.amount / 12 
-        : sub.billingCycle === 'custom' && sub.customDays
-        ? (sub.amount / sub.customDays) * 30
-        : sub.amount;
+      const monthlyAmount = getMonthlyAmount(sub, defaultCurrency);
       
       categoryTotals.set(
         sub.category, 
@@ -73,12 +69,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ subscriptions, defaultCurrency })
       
       // For demo purposes, we'll simulate monthly spending
       const monthlySpend = activeSubscriptions.reduce((total, sub) => {
-        const monthlyAmount = sub.billingCycle === 'yearly' 
-          ? sub.amount / 12 
-          : sub.billingCycle === 'custom' && sub.customDays
-          ? (sub.amount / sub.customDays) * 30
-          : sub.amount;
-        return total + monthlyAmount;
+        return total + getMonthlyAmount(sub, defaultCurrency);
       }, 0);
       
       // Add some variation for demo
@@ -104,7 +95,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ subscriptions, defaultCurrency })
     labels: monthlyTrend.months,
     datasets: [
       {
-        label: `Monthly Spend (${currencySymbol})`,
+        label: `Monthly Spend (${defaultCurrency})`,
         data: monthlyTrend.amounts,
         backgroundColor: 'rgba(54, 162, 235, 0.5)',
         borderColor: 'rgba(54, 162, 235, 1)',
@@ -142,7 +133,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ subscriptions, defaultCurrency })
               <div className="d-flex justify-content-between align-items-center">
                 <div>
                   <h6 className="card-title mb-0">Total Monthly</h6>
-                  <h3 className="mb-0 text-primary">{currencySymbol}{totalMonthlySpend.toFixed(2)}</h3>
+                  <h3 className="mb-0 text-primary">{formatCurrencyAmount(totalMonthlySpend, defaultCurrency)}</h3>
                 </div>
                 <DollarSign size={32} className="text-primary opacity-75" />
               </div>
@@ -170,7 +161,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ subscriptions, defaultCurrency })
               <div className="d-flex justify-content-between align-items-center">
                 <div>
                   <h6 className="card-title mb-0">Avg per Category</h6>
-                  <h3 className="mb-0 text-success">{currencySymbol}{averagePerCategory.toFixed(2)}</h3>
+                  <h3 className="mb-0 text-success">{formatCurrencyAmount(averagePerCategory, defaultCurrency)}</h3>
                 </div>
                 <BarChart3 size={32} className="text-success opacity-75" />
               </div>
@@ -184,7 +175,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ subscriptions, defaultCurrency })
               <div className="d-flex justify-content-between align-items-center">
                 <div>
                   <h6 className="card-title mb-0">Top Category</h6>
-                  <h3 className="mb-0 text-warning">{currencySymbol}{highestAmount.toFixed(2)}</h3>
+                  <h3 className="mb-0 text-warning">{formatCurrencyAmount(highestAmount, defaultCurrency)}</h3>
                   <small className="text-muted">{highestCategory}</small>
                 </div>
                 <TrendingUp size={32} className="text-warning opacity-75" />
@@ -266,7 +257,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ subscriptions, defaultCurrency })
                                 </div>
                               </div>
                               <div className="text-end">
-                                <div className="fw-bold">{currencySymbol}{amount.toFixed(2)}</div>
+                                <div className="fw-bold">{formatCurrencyAmount(amount, defaultCurrency)}</div>
                                 <small className="text-muted">per month</small>
                               </div>
                             </div>

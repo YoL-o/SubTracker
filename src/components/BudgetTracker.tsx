@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, ProgressBar, Alert, Badge } from 'react-bootstrap';
 import { TrendingUp, AlertTriangle, Target } from 'lucide-react';
 import { Subscription, Budget } from '../types';
-import { currencies } from '../data/categories';
+import { getMonthlyAmount, formatCurrencyAmount } from '../utils/currencyUtils';
 
 interface BudgetTrackerProps {
   subscriptions: Subscription[];
@@ -17,26 +17,10 @@ const BudgetTracker: React.FC<BudgetTrackerProps> = ({
 }) => {
   if (!budget || !budget.isActive) return null;
 
-  const currencySymbol = currencies.find(c => c.code === defaultCurrency)?.symbol || '$';
-  
   // Calculate current spending
   const currentSpending = subscriptions
     .filter(sub => sub.isActive && !sub.isFreeTrial)
-    .reduce((total, sub) => {
-      let monthlyAmount = sub.amount;
-      if (sub.billingCycle === 'yearly') {
-        monthlyAmount = sub.amount / 12;
-      } else if (sub.billingCycle === 'custom' && sub.customDays) {
-        monthlyAmount = (sub.amount / sub.customDays) * 30;
-      }
-      
-      // Apply user share if subscription is shared
-      if (sub.splitCost && sub.userShare) {
-        monthlyAmount = monthlyAmount * (sub.userShare / 100);
-      }
-      
-      return total + monthlyAmount;
-    }, 0);
+    .reduce((total, sub) => total + getMonthlyAmount(sub, defaultCurrency), 0);
 
   const budgetUsedPercentage = (currentSpending / budget.limit) * 100;
   const isOverBudget = budgetUsedPercentage > 100;
@@ -64,10 +48,10 @@ const BudgetTracker: React.FC<BudgetTrackerProps> = ({
         <div className="mb-3">
           <div className="d-flex justify-content-between align-items-center mb-2">
             <span className="text-muted">
-              {currencySymbol}{currentSpending.toFixed(2)} of {currencySymbol}{budget.limit.toFixed(2)}
+              {formatCurrencyAmount(currentSpending, defaultCurrency)} of {formatCurrencyAmount(budget.limit, defaultCurrency)}
             </span>
             <span className="text-muted">
-              {currencySymbol}{(budget.limit - currentSpending).toFixed(2)} remaining
+              {formatCurrencyAmount(budget.limit - currentSpending, defaultCurrency)} remaining
             </span>
           </div>
           <ProgressBar
@@ -81,7 +65,7 @@ const BudgetTracker: React.FC<BudgetTrackerProps> = ({
           <Alert variant="danger" className="py-2 mb-0">
             <AlertTriangle size={16} className="me-2" />
             <small>
-              <strong>Budget exceeded!</strong> You're {currencySymbol}{(currentSpending - budget.limit).toFixed(2)} over your monthly limit.
+              <strong>Budget exceeded!</strong> You're {formatCurrencyAmount(currentSpending - budget.limit, defaultCurrency)} over your monthly limit.
             </small>
           </Alert>
         )}

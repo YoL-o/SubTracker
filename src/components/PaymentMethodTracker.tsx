@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, Row, Col, Badge, ListGroup } from 'react-bootstrap';
 import { CreditCard, Calendar } from 'lucide-react';
 import { Subscription } from '../types';
-import { currencies } from '../data/categories';
+import { getMonthlyAmount, formatCurrencyAmount } from '../utils/currencyUtils';
 import { formatDate, getDaysUntil } from '../utils/dateUtils';
 
 interface PaymentMethodTrackerProps {
@@ -14,7 +14,6 @@ const PaymentMethodTracker: React.FC<PaymentMethodTrackerProps> = ({
   subscriptions,
   defaultCurrency,
 }) => {
-  const currencySymbol = currencies.find(c => c.code === defaultCurrency)?.symbol || '$';
   const activeSubscriptions = subscriptions.filter(sub => sub.isActive);
 
   // Group subscriptions by payment method
@@ -57,20 +56,7 @@ const PaymentMethodTracker: React.FC<PaymentMethodTrackerProps> = ({
           </Card.Header>
           <Card.Body>
             {Object.entries(groupedByPaymentMethod).map(([method, subs]) => {
-              const totalMonthly = subs.reduce((total, sub) => {
-                let monthlyAmount = sub.amount;
-                if (sub.billingCycle === 'yearly') {
-                  monthlyAmount = sub.amount / 12;
-                } else if (sub.billingCycle === 'custom' && sub.customDays) {
-                  monthlyAmount = (sub.amount / sub.customDays) * 30;
-                }
-                
-                if (sub.splitCost && sub.userShare) {
-                  monthlyAmount = monthlyAmount * (sub.userShare / 100);
-                }
-                
-                return total + monthlyAmount;
-              }, 0);
+              const totalMonthly = subs.reduce((total, sub) => total + getMonthlyAmount(sub, defaultCurrency), 0);
 
               return (
                 <div key={method} className="mb-3 p-3 bg-light rounded">
@@ -80,7 +66,7 @@ const PaymentMethodTracker: React.FC<PaymentMethodTrackerProps> = ({
                   </div>
                   <div className="d-flex justify-content-between align-items-center">
                     <small className="text-muted">Monthly total:</small>
-                    <strong>{currencySymbol}{totalMonthly.toFixed(2)}</strong>
+                    <strong>{formatCurrencyAmount(totalMonthly, defaultCurrency)}</strong>
                   </div>
                 </div>
               );
@@ -118,10 +104,7 @@ const PaymentMethodTracker: React.FC<PaymentMethodTrackerProps> = ({
                           </div>
                           <div className="text-end">
                             <div className="fw-bold">
-                              {currencySymbol}{sub.splitCost && sub.userShare ? 
-                                (sub.amount * (sub.userShare / 100)).toFixed(2) : 
-                                sub.amount.toFixed(2)
-                              }
+                              {formatCurrencyAmount(getMonthlyAmount(sub, defaultCurrency), defaultCurrency)}
                             </div>
                             {sub.splitCost && (
                               <small className="text-muted">

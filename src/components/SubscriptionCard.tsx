@@ -3,13 +3,15 @@ import { Card, Badge, Button, Row, Col } from 'react-bootstrap';
 import { Calendar, CreditCard, AlertCircle, CheckCircle, Trash2, Edit, Users } from 'lucide-react';
 import { Subscription } from '../types';
 import { formatDate, getDaysUntil, isPastDue, isUpcoming } from '../utils/dateUtils';
-import { categories, currencies } from '../data/categories';
+import { categories } from '../data/categories';
+import { getConvertedAmount, formatCurrencyAmount } from '../utils/currencyUtils';
 
 interface SubscriptionCardProps {
   subscription: Subscription;
   onEdit: (subscription: Subscription) => void;
   onDelete: (id: string) => void;
   onRenew: (id: string) => void;
+  defaultCurrency?: string;
 }
 
 const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
@@ -17,13 +19,17 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   onEdit,
   onDelete,
   onRenew,
+  defaultCurrency = 'USD',
 }) => {
   const daysUntil = getDaysUntil(subscription.nextBillingDate);
   const category = categories.find(cat => cat.name === subscription.category);
-  const currency = currencies.find(curr => curr.code === subscription.currency);
   const isPastDueDate = isPastDue(subscription.nextBillingDate);
   const isUpcomingRenewal = isUpcoming(subscription.nextBillingDate, 7);
 
+  // Get converted amount in default currency
+  const displayAmount = subscription.splitCost && subscription.userShare 
+    ? getConvertedAmount(subscription, defaultCurrency) * (subscription.userShare / 100)
+    : getConvertedAmount(subscription, defaultCurrency);
   const getBadgeVariant = () => {
     if (!subscription.isActive) return 'secondary';
     if (subscription.isFreeTrial) return 'warning';
@@ -63,11 +69,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
             <div className="d-flex align-items-center text-muted small">
               <CreditCard size={14} className="me-1" />
               <span>
-                {currency?.symbol || '$'}
-                {subscription.splitCost && subscription.userShare ? 
-                  (subscription.amount * (subscription.userShare / 100)).toFixed(2) : 
-                  subscription.amount.toFixed(2)
-                }
+                {formatCurrencyAmount(displayAmount, defaultCurrency)}
               </span>
               <span className="ms-1">/{subscription.billingCycle}</span>
               {subscription.splitCost && (
@@ -112,8 +114,12 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           <div className="mb-2">
             <small className="text-info">
               <Users size={12} className="me-1" />
-              Shared • Your share: {subscription.userShare}% 
-              (Total: {currency?.symbol || '$'}{subscription.amount.toFixed(2)})
+            Shared • Your share: {subscription.userShare}%
+            {subscription.currency !== defaultCurrency && (
+              <span className="text-muted">
+                {' '}(Original: {formatCurrencyAmount(subscription.amount, subscription.currency)})
+              </span>
+            )}
             </small>
           </div>
         )}
@@ -127,7 +133,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               <Button
                 variant="success"
                 size="sm"
-                onClick={() => onRenew(subscription.id)}
+          Total spent: {formatCurrencyAmount(getConvertedAmount({ ...subscription, amount: subscription.totalSpent }, defaultCurrency), defaultCurrency)}
                 title="Mark as Renewed"
               >
                 <CheckCircle size={14} />
