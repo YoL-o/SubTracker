@@ -3,8 +3,12 @@ import { Container, Row, Col, Card, Button, Badge, Alert } from 'react-bootstrap
 import { Plus, TrendingUp, Calendar, AlertTriangle } from 'lucide-react';
 import { Subscription } from '../types';
 import SubscriptionCard from './SubscriptionCard';
+import BudgetTracker from './BudgetTracker';
+import PaymentMethodTracker from './PaymentMethodTracker';
+import BillingHistory from './BillingHistory';
 import { getDaysUntil, isPastDue, isUpcoming } from '../utils/dateUtils';
 import { currencies } from '../data/categories';
+import { BillingHistory as BillingHistoryType } from '../types';
 
 interface DashboardProps {
   subscriptions: Subscription[];
@@ -13,6 +17,8 @@ interface DashboardProps {
   onDeleteSubscription: (id: string) => void;
   onRenewSubscription: (id: string) => void;
   defaultCurrency: string;
+  budget?: any;
+  billingHistory?: BillingHistoryType[];
 }
 
 const Dashboard: React.FC<DashboardProps> = ({
@@ -22,6 +28,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   onDeleteSubscription,
   onRenewSubscription,
   defaultCurrency,
+  budget,
+  billingHistory = [],
 }) => {
   const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
 
@@ -37,6 +45,12 @@ const Dashboard: React.FC<DashboardProps> = ({
     } else if (sub.billingCycle === 'custom' && sub.customDays) {
       monthlyAmount = (sub.amount / sub.customDays) * 30;
     }
+    
+    // Apply user share if subscription is shared
+    if (sub.splitCost && sub.userShare) {
+      monthlyAmount = monthlyAmount * (sub.userShare / 100);
+    }
+    
     return total + monthlyAmount;
   }, 0);
 
@@ -136,6 +150,19 @@ const Dashboard: React.FC<DashboardProps> = ({
         </Alert>
       )}
 
+      {/* Budget Tracker */}
+      <BudgetTracker
+        subscriptions={subscriptions}
+        budget={budget}
+        defaultCurrency={defaultCurrency}
+      />
+
+      {/* Payment Method Tracker */}
+      <PaymentMethodTracker
+        subscriptions={subscriptions}
+        defaultCurrency={defaultCurrency}
+      />
+
       {/* Subscriptions Grid */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4>Your Subscriptions ({activeSubscriptions.length})</h4>
@@ -167,6 +194,18 @@ const Dashboard: React.FC<DashboardProps> = ({
                 />
               </Col>
             ))}
+        </Row>
+      )}
+
+      {/* Billing History */}
+      {billingHistory.length > 0 && (
+        <Row className="mt-4">
+          <Col>
+            <BillingHistory
+              history={billingHistory}
+              defaultCurrency={defaultCurrency}
+            />
+          </Col>
         </Row>
       )}
     </Container>
